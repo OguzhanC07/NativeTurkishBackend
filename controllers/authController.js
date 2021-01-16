@@ -10,26 +10,16 @@ const signToken = (id) => {
   });
 };
 
-const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
-
-  user.password = undefined;
-  res.status(statusCode).json({
-    status: "success",
-    token,
-    data: {
-      user,
-    },
-  });
-};
-
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
   });
-  createSendToken(newUser, 201, user);
+  const token = signToken(newUser._id);
+  res.status(200).json({
+    token,
+  });
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -40,19 +30,23 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Please provide email and password", 400));
   }
 
-  //2) check if user exist && password is correct
-  const user = await User.findOne({ email }).select("+password");
+  //2) check if user exist && email-password check
+  const user = await User.findOne({ email }).select("+password +role");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Incorret email or password", 401));
   }
 
   //3- if everything is correct send token
-  createSendToken(user, 200, res);
+  const token = signToken(user._id);
+  res.status(200).json({
+    token,
+    role: user.role,
+  });
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
-  //1) getting token adn check of its there
+  //1) getting token and check if its there
   let token;
   if (
     req.headers.authorization &&
@@ -69,7 +63,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   //3)check if user still exists
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await User.findById(decoded.id).select("+role");
   if (!currentUser) {
     return next(new AppError("The user belonging this not exist"), 401);
   }
@@ -78,10 +72,11 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.restricTo = (...roles) => {
+exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(new AppError("You do not have permission"));
     }
+    next();
   };
 };

@@ -4,7 +4,7 @@ const AppError = require("../utils/appError");
 
 exports.addQuestion = catchAsync(async (req, res, next) => {
   const newQuestion = await Question.create({
-    question_text: req.question,
+    description: req.body.description,
     level: req.body.level,
     alternatives: req.body.alternatives,
   });
@@ -36,20 +36,19 @@ exports.deleteQuestion = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getQuestionsByLevel = catchAsync(async (req, res, next) => {
-  const questions = Question.find();
+exports.getAllQuestions = catchAsync(async (req, res, next) => {
+  const questions = await Question.find();
 
   res.status(200).json(questions);
 });
 
 exports.getQuestion = catchAsync(async (req, res, next) => {
-    const _id = req.params.id,
+  const _id = req.params.id;
 
-    const question = await Question.findOne({ _id });
-    if (!question) {
-        return next(new AppError('Question id is not valid'), 404);
-    }
+  const question = await Question.findOne({ _id });
+  if (!question) {
+    return next(new AppError("Question id is not valid"), 404);
+  }
 
-    return res.status(200).json(question);
-    
-})
+  res.status(200).json(question);
+});
