@@ -3,7 +3,8 @@ const questionController = require("../controllers/questionController");
 const authController = require("../controllers/authController");
 
 const router = express.Router();
-
+router.route('/answer').post(authController.protect, questionController.correctQuestion);
+router.route('/quizQuestion').get(authController.protect, questionController.getQuestionByLevel);
 router
   .route("/")
   .get(authController.protect, questionController.getAllQuestions)
@@ -16,7 +17,7 @@ router
 router
   .route("/:id")
   .get(authController.protect, questionController.getQuestion)
-  .patch(
+  .put(
     authController.protect,
     authController.restrictTo("Admin"),
     questionController.updateQuestion

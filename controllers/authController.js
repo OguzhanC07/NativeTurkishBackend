@@ -12,28 +12,25 @@ const signToken = (id) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
+    name: req.body.Name,
+    email: req.body.Email,
+    password: req.body.Password,
   });
-  const token = signToken(newUser._id);
-  res.status(200).json({
-    token,
-  });
+  res.status(200).json();
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { Email, Password } = req.body;
 
   //1-Check Email && password exist
-  if (!email || !password) {
+  if (!Email || !Password) {
     return next(new AppError("Please provide email and password", 400));
   }
 
   //2) check if user exist && email-password check
-  const user = await User.findOne({ email }).select("+password +role");
+  const user = await User.findOne({ 'email' : Email }).select("+password +role");
 
-  if (!user || !(await user.correctPassword(password, user.password))) {
+  if (!user || !(await user.correctPassword(Password, user.password))) {
     return next(new AppError("Incorret email or password", 401));
   }
 
@@ -41,6 +38,8 @@ exports.login = catchAsync(async (req, res, next) => {
   const token = signToken(user._id);
   res.status(200).json({
     token,
+    id: user._id,
+    name:user.name,
     role: user.role,
   });
 });

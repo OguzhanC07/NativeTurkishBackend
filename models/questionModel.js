@@ -30,8 +30,9 @@ const questionSchema = mongoose.Schema({
   ],
   answeredUsers: [
     {
-      userId: mongoose.Types.ObjectId,
-    },
+        type: mongoose.Schema.ObjectId,
+        ref: 'User'
+      }
   ],
 });
 
